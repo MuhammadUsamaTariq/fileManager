@@ -5,38 +5,31 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
     TextView textView;
     ImageView image;
     Button btnForAnyFile;
+    Button btnForCameraImagePicker;
     Button btnForImageFile;
     Intent path;
-    public static final int permissionRequestCode = 001;
+    public static final int permissionRequestCodeForFilePicker = 001;
+    public static final int permissionRequestCodeForImageFilePicker = 002;
+    public static final int cameraRequestCode = 003;
 
 
 
@@ -51,26 +44,60 @@ public class MainActivity extends AppCompatActivity {
         image = findViewById(R.id.imageView);
 
         btnForAnyFile.setOnClickListener(v -> {
-            requestPermission();
+            requestPermission(0);
         });
 
         btnForImageFile.setOnClickListener(v -> {
 
-            path = new Intent(Intent.ACTION_GET_CONTENT);
-            path.setType("image/*");
-            startActivityForResult(path, 2);
-            Toast.makeText(this, "Testing git process", Toast.LENGTH_SHORT).show();
+            requestPermission(1);
+
+        });
+
+        btnForCameraImagePicker.setOnClickListener(v -> {
+
+            requestPermission(2);
 
         });
 
 
     }
 
-    private void requestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, permissionRequestCode );
-        } else {
-            openFilePicker();
+    private void openImageFilePicker() {
+        path = new Intent(Intent.ACTION_GET_CONTENT);
+        path.setType("image/*");
+        startActivityForResult(path, 2);
+    }
+
+    private void openPickImageFromCamera(){
+        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(cameraIntent, cameraRequestCode);
+    }
+
+    private void requestPermission(int fileStatus) {
+        switch (fileStatus) {
+            case 0:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, permissionRequestCodeForFilePicker);
+                } else {
+                    openFilePicker();
+                }
+                break;
+            case 1:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, permissionRequestCodeForImageFilePicker);
+                } else {
+                    openImageFilePicker();
+                }
+                break;
+            case 2:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(new String[]{Manifest.permission.CAMERA}, cameraRequestCode);
+                } else {
+                    openPickImageFromCamera();
+                }
+                break;
+            default:
+                Toast.makeText(this, "Invalid Status", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -84,8 +111,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == permissionRequestCode && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            openFilePicker();}
+        if (requestCode == permissionRequestCodeForFilePicker && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openFilePicker();
+        }else{
+            Toast.makeText(this, "Permission Required", Toast.LENGTH_SHORT).show();
+        }
+        if (requestCode == permissionRequestCodeForImageFilePicker && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openImageFilePicker();
+        }else{
+            Toast.makeText(this, "Permission Required", Toast.LENGTH_SHORT).show();
+        }
+        if (requestCode == cameraRequestCode && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openPickImageFromCamera();
+        }else{
+            Toast.makeText(this, "Permission Required", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -110,6 +150,11 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+        }
+
+        if(requestCode == cameraRequestCode){
+            Bitmap photo = (Bitmap) data.getExtras().get("data");
+            image.setImageBitmap(photo);
         }
 
     }
