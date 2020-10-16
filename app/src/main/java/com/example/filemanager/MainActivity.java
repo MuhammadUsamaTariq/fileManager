@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
             path = new Intent(Intent.ACTION_GET_CONTENT);
             path.setType("image/*");
             startActivityForResult(path, 2);
+            Toast.makeText(this, "Testing git process", Toast.LENGTH_SHORT).show();
 
         });
 
