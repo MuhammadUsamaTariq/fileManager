@@ -1,15 +1,19 @@
 package com.example.filemanager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -32,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     Button btnForAnyFile;
     Button btnForImageFile;
     Intent path;
+    public static final int permissionRequestCode = 001;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +51,7 @@ public class MainActivity extends AppCompatActivity {
         image = findViewById(R.id.imageView);
 
         btnForAnyFile.setOnClickListener(v -> {
-
-            path = new Intent(Intent.ACTION_GET_CONTENT);
-            path.setType("*/*");
-            startActivityForResult(path, 1);
+            requestPermission();
         });
 
         btnForImageFile.setOnClickListener(v -> {
@@ -60,6 +64,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+    }
+
+    private void requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, permissionRequestCode );
+        } else {
+            openFilePicker();
+        }
+    }
+
+    private void openFilePicker() {
+
+        path = new Intent(Intent.ACTION_GET_CONTENT);
+        path.setType("*/*");
+        startActivityForResult(path, 1);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == permissionRequestCode && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openFilePicker();}
     }
 
     @Override
