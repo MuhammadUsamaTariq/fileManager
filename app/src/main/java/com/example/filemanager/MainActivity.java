@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         textView = findViewById(R.id.textView);
         btnForAnyFile = findViewById(R.id.button);
         btnForImageFile = findViewById(R.id.button2);
+        btnForCameraImagePicker = findViewById(R.id.button3);
         image = findViewById(R.id.imageView);
 
         btnForAnyFile.setOnClickListener(v -> {
