@@ -305,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void imageShare() {
         Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("document/rfc822");
+        intent.setType("application/pdf");
         startActivity(Intent.createChooser(intent, "Choose an share client"));
     }
 
