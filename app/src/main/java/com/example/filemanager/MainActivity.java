@@ -127,12 +127,14 @@ public class MainActivity extends AppCompatActivity {
         String[] recipients = recipientList.split(",");
         String subject = mEditTextSubject.getText().toString();
         String message = mEditTextMessage.getText().toString();
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.putExtra(Intent.EXTRA_EMAIL, recipients);
-        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
-        intent.putExtra(Intent.EXTRA_TEXT, message);
-        intent.setType("message/rfc822");
-        startActivity(Intent.createChooser(intent, "Choose an email client"));
+        Intent send = new Intent(Intent.ACTION_SENDTO);
+        String uriText = "mailto:" + Uri.encode(recipientList) +
+                "?subject=" + Uri.encode(subject) +
+                "&body=" + Uri.encode(message);
+        Uri uri = Uri.parse(uriText);
+
+        send.setData(uri);
+        startActivity(Intent.createChooser(send, "Send mail..."));
     }
 
     private void googleUrl() {
@@ -290,23 +292,27 @@ public class MainActivity extends AppCompatActivity {
             File filePath = new File(dir ,targetPdf);
             try {
                 document.writeTo(new FileOutputStream(filePath));
-                btnToSaveAsPdf.setText("Check PDF");
 
             } catch (IOException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Something wrong: " + e.toString(), Toast.LENGTH_LONG).show();
             }
-            imageShare();
+            Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+
+
+                intentShareFile.setType("application/pdf");
+            intentShareFile.putExtra(Intent.EXTRA_STREAM,
+                    Uri.parse(filePath.getAbsolutePath()));
+
+        /*        intentShareFile.putExtra(Intent.EXTRA_SUBJECT, "Sharing File...");
+                intentShareFile.putExtra(Intent.EXTRA_TEXT, "Sharing File...");*/
+
+                startActivity(Intent.createChooser(intentShareFile, "Share File"));
+
         }else {
             edtFileName.setError("File name must be entered");
         }
         document.close();
-    }
-
-    private void imageShare() {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("application/pdf");
-        startActivity(Intent.createChooser(intent, "Choose an share client"));
     }
 
     private void openFilePicker() {
