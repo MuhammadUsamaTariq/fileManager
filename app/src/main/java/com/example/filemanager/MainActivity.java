@@ -3,8 +3,11 @@ package com.example.filemanager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ShareCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,6 +24,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -276,11 +280,10 @@ public class MainActivity extends AppCompatActivity {
         canvas.drawPaint(paint);
 
 
-
         bitmap = Bitmap.createScaledBitmap(bitmap, bitmap.getWidth(), bitmap.getHeight(), true);
 
         paint.setColor(Color.BLUE);
-        canvas.drawBitmap(bitmap, 0, 0 , null);
+        canvas.drawBitmap(bitmap, 0, 0, null);
         document.finishPage(page);
 
         File file = Environment.getExternalStorageDirectory();
@@ -288,8 +291,9 @@ public class MainActivity extends AppCompatActivity {
         dir.mkdirs();
         // write the document content
         if (edtFileName.length() > 0) {
-            String targetPdf = String.format(edtFileName.getText().toString() + ".pdf", System.currentTimeMillis());
-            File filePath = new File(dir ,targetPdf);
+            String targetPdf = edtFileName.getText().toString() + ".pdf";
+            //String.format(edtFileName.getText().toString() + ".pdf", System.currentTimeMillis());
+            File filePath = new File(dir, targetPdf);
             try {
                 document.writeTo(new FileOutputStream(filePath));
 
@@ -297,22 +301,35 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
                 Toast.makeText(this, "Something wrong: " + e.toString(), Toast.LENGTH_LONG).show();
             }
-            Intent intentShareFile = new Intent(Intent.ACTION_SEND);
 
 
+            document.close();
+
+            Uri fileUri;
+
+            if (filePath.exists()) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    fileUri = FileProvider.getUriForFile(this,
+                            "com.example.filemanager", filePath);
+                } else {
+                    fileUri = Uri.fromFile(filePath);
+                }
+
+                Intent intentShareFile = new Intent(Intent.ACTION_SEND);
                 intentShareFile.setType("application/pdf");
-            intentShareFile.putExtra(Intent.EXTRA_STREAM,
-                    Uri.parse(filePath.getAbsolutePath()));
+                intentShareFile.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intentShareFile.putExtra(Intent.EXTRA_STREAM, fileUri);
+                startActivity(Intent.createChooser(intentShareFile, "File Sharing"));
 
-        /*        intentShareFile.putExtra(Intent.EXTRA_SUBJECT, "Sharing File...");
-                intentShareFile.putExtra(Intent.EXTRA_TEXT, "Sharing File...");*/
+            } else {
+                Toast.makeText(this, "File no save", Toast.LENGTH_SHORT).show();
+            }
 
-                startActivity(Intent.createChooser(intentShareFile, "Share File"));
-
-        }else {
+        } else {
             edtFileName.setError("File name must be entered");
         }
-        document.close();
+
     }
 
     private void openFilePicker() {
